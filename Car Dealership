@@ -1,0 +1,324 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <climits>
+#include <stdexcept>
+
+using namespace std;
+
+class User {
+public:
+    string password;
+    string name;
+    string email;
+
+    void getData(string n, string e, string p) {
+        name = n;
+        email = e;
+        password = p;
+    }
+
+    virtual void display() {
+        cout << "Name: " << name << endl;
+        cout << "Email: " << email << endl;
+    }
+
+    virtual ~User() {}
+};
+
+class Admin : public User {
+public:
+    void display() override {
+        cout << "Admin Name: " << name << " (Admin)" << endl;
+    }
+};
+
+class Car {
+public:
+    string name;
+    string color;
+    int price;
+    string engine;
+    string brakes;
+    string suspension;
+    string seatingCapacity;
+    string fuelTankCapacity;
+    string fuelType;
+    string airbags;
+    string model;
+    string interior;
+    string mileage;
+    string brand;
+
+    virtual void displayCarDetails() const {
+        cout << "Car Details:" << endl;
+        cout << "Brand: " << brand << endl;
+        cout << "Model: " << model << endl;
+        cout << "Price: " << price << endl;
+        cout << "Mileage: " << mileage << endl;
+        cout << "Engine: " << engine << endl;
+        cout << "Fuel Type: " << fuelType << endl;
+        cout << "Color: " << color << endl;
+        cout << "Brakes: " << brakes << endl;
+        cout << "Suspension: " << suspension << endl;
+        cout << "Seating Capacity: " << seatingCapacity << endl;
+        cout << "Fuel Tank Capacity: " << fuelTankCapacity << endl;
+        cout << "Airbags: " << airbags << endl;
+        cout << "Interior: " << interior << endl;
+        cout << "-----------------------" << endl;
+    }
+
+    virtual ~Car() {}
+};
+
+class ElectricCar : public Car {
+public:
+    ElectricCar(const Car& car) {
+        name = car.name;
+        color = car.color;
+        price = car.price;
+        engine = car.engine;
+        brakes = car.brakes;
+        suspension = car.suspension;
+        seatingCapacity = car.seatingCapacity;
+        fuelTankCapacity = car.fuelTankCapacity;
+        fuelType = car.fuelType;
+        airbags = car.airbags;
+        model = car.model;
+        interior = car.interior;
+        mileage = car.mileage;
+        brand = car.brand;
+    }
+
+    void displayCarDetails() const override {
+        cout << "Electric Car Details:" << endl;
+        Car::displayCarDetails();
+    }
+};
+
+bool isValidEmail(const string& email) {
+    return email.find('@') != string::npos && email.find('.') != string::npos;
+}
+
+bool isValidPassword(const string& password) {
+    return password.length() >= 6; 
+}
+
+bool saveUserToFile(const User& user) {
+    ofstream file("users.txt", ios::app);
+    if (!file.is_open()) {
+        cout << "Unable to open file to save user data." << endl;
+        return false; 
+    }
+    file << user.name << "," << user.email << "," << user.password << endl;
+    return true; 
+}
+
+void account(User& user) {
+    int log;
+    cout << "Do you already have an account with us?\n";
+    cout << "1 for Log In\n2 for creating new Account\n";
+    cout << "Enter: ";
+    cin >> log;
+
+    while (log != 1 && log != 2) {
+        cout << "Invalid option. Please enter 1 for Log In or 2 for creating new Account: ";
+        cin >> log;
+    }
+
+    if (log == 1) { 
+        bool loginSuccessful = false;
+
+        while (!loginSuccessful) {
+            cout << "Enter your email: ";
+            cin >> user.email;
+            while (!isValidEmail(user.email)) {
+                cout << "Invalid email. Please enter a valid email: ";
+                cin >> user.email;
+            }
+
+            cout << "Enter your password: ";
+            cin >> user.password;
+            while (!isValidPassword(user.password)) {
+                cout << "Invalid password. Please enter a password of at least 6 characters: ";
+                cin >> user.password;
+            }
+
+            ifstream file("users.txt");
+            string line;
+
+            while (getline(file, line)) {
+                stringstream ss(line);
+                string name, email, password;
+
+                getline(ss, name, ',');
+                getline(ss, email, ',');
+                getline(ss, password, ',');
+
+                if (email == user.email && password == user.password) {
+                    user.name = name;
+                    loginSuccessful = true;
+                    break;
+                }
+            }
+
+            if (loginSuccessful) {
+                cout << "Login successful!" << endl;
+            } else {
+                cout << "Login failed. Invalid email or password. Please try again." << endl;
+            }
+        }
+
+    } else if (log == 2) { 
+        string name, email, password;
+        cout << "Enter your name: ";
+        cin.ignore();
+        getline(cin, name);
+
+        cout << "Enter your email: ";
+        cin >> email;
+        while (!isValidEmail(email)) {
+            cout << "Invalid email. Please enter a valid email: ";
+            cin >> email;
+        }
+
+        cout << "Enter your password: ";
+        cin >> password;
+        while (!isValidPassword(password)) {
+            cout << "Invalid password. Please enter a password of at least 6 characters: ";
+            cin >> password;
+        }
+
+        user.getData(name, email, password);
+        if (saveUserToFile(user)) { 
+            cout << "Account created successfully!" << endl;
+        }
+    }
+}
+
+vector<Car> loadCarsFromFile(const string& filename) {
+    vector<Car> cars;
+    ifstream file(filename);
+    string line;
+
+    if (!file.is_open()) {
+        throw runtime_error("Failed to open the file: " + filename);
+    }
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        Car car;
+        string temp;
+
+        getline(ss, car.color, ',');
+        ss >> car.price; ss.ignore();
+        getline(ss, car.engine, ',');
+        getline(ss, car.brakes, ',');
+        getline(ss, car.suspension, ',');
+        getline(ss, car.seatingCapacity, ',');
+        getline(ss, car.fuelTankCapacity, ',');
+        getline(ss, car.fuelType, ',');
+        getline(ss, car.airbags, ',');
+        getline(ss, car.model, ',');
+        getline(ss, car.interior, ',');
+        getline(ss, car.mileage, ',');
+        getline(ss, car.brand, ',');
+
+        if (car.brand == "Tesla") {
+            ElectricCar electricCar(car); 
+            cars.push_back(electricCar);
+        } else {
+            cars.push_back(car);
+        }
+    }
+    file.close();
+    return cars;
+}
+
+void handlePurchase(const Car& car, const User& user) {
+    cout << "You have successfully booked the " << car.model << " for $" << car.price << "!\n";
+    
+    ofstream purchaseFile("purchases.txt", ios::app);
+    if (purchaseFile.is_open()) {
+        purchaseFile << "Buyer: " << user.name << ", Email: " << user.email
+                     << ", Purchased Car: " << car.brand << " " << car.model
+                     << ", Price: $" << car.price << "\n";
+        purchaseFile.close();
+    } else {
+        cout << "Error saving purchase information.\n";
+    }
+}
+
+void displayCarsByBudget(const vector<Car>& cars, int budgetOption, const User& user, int brandChoice) {
+    int minPrice = 0, maxPrice = INT_MAX;
+
+    switch (budgetOption) {
+        case 1: maxPrice = 5000000; break;
+        case 2: minPrice = 5000000; maxPrice = 7000000; break;
+        case 3: minPrice = 7000000; maxPrice = 10000000; break;
+        case 4: minPrice = 10000000; break;
+        default: throw runtime_error("Invalid budget option.");
+    }
+
+    string selectedBrand;
+    switch (brandChoice) {
+        case 1: selectedBrand = "BMW"; break;
+        case 2: selectedBrand = "Audi"; break;
+        case 3: selectedBrand = "Tesla"; break;
+        case 4: selectedBrand = "Mercedes-Benz"; break;
+        case 5: selectedBrand = "Toyota"; break;
+        default: throw runtime_error("Error: Invalid brand choice.");
+    }
+
+    for (const auto& car : cars) {
+        if (car.price >= minPrice && car.price < maxPrice && car.brand == selectedBrand) {
+            car.displayCarDetails(); 
+
+            char interest;
+            cout << "Are you interested in purchasing the " << car.model << "? (y/n): ";
+            cin >> interest;
+            if (interest == 'y' || interest == 'Y') {
+                handlePurchase(car, user);
+            } else {
+                cout << "Continuing to explore other options...\n";
+            }
+        }
+    }
+}
+
+int main() {
+    cout << "*\n";
+    cout << "Welcome to MIT CAR Dealership\n";
+    cout << "*\n";
+
+    User user; 
+    account(user); 
+
+    vector<Car> cars;
+    try {
+        cars = loadCarsFromFile("cars.txt");
+    } catch (const runtime_error& e) {
+        cout << e.what() << endl;
+        return 1;
+    }
+
+    int brandChoice, budgetChoice;
+    cout << "Which car brand are you looking for?\n";
+    cout << "1. BMW\n2. Audi\n3. Tesla\n4. Mercedes-Benz\n5. Toyota\n";
+    cin >> brandChoice;
+
+    cout << "What is your budget for your new vehicle?\n";
+    cout << "1. Under $5,000,000\n2. $5,000,000 - $7,000,000\n3. $7,000,000 - $10,000,000\n4. Over $10,000,000\n";
+    cin >> budgetChoice;
+
+    try {
+        displayCarsByBudget(cars, budgetChoice, user, brandChoice); 
+    } catch (const runtime_error& e) {
+        cout << e.what() << endl;
+        return 1;
+    }
+
+    return 0;
+}
